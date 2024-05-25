@@ -1,0 +1,174 @@
+css:
+body {
+    background-color: skyblue;
+    text-align: center;
+}
+button { 
+    margin-top: 20px; 
+}
+
+/////////////////////////////////////////////////////////////////////
+html:
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Голосование</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <script src="https://cdn.ethers.io/lib/ethers-5.4.esm.min.js"></script>
+    <script>
+        let provider = new ethers.providers.Web3Provider(window.ethereum);
+        let contractAddress = "0xd2a5bC10698FD955D1Fe6cb468a17809A08fd005";
+        let abi = [ [
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_topic",
+				"type": "string"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [],
+		"name": "getResults",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "topic",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "voteAgainst",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "voteFor",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "votesAgainst",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "votesFor",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+] ];
+        let contract = new ethers.Contract(contractAddress, abi, provider);
+
+        async function getTopic() {
+            let topic = await contract.topic();
+            document.getElementById("topic").innerText = topic;
+        }
+
+        async function getResults() {
+            let results = await contract.getResults();
+            document.getElementById("results").innerText = `За: ${results[0]}, Против: ${results[1]}`;
+        }
+
+        document.getElementById("voteFor").addEventListener("click", async () => {
+            let tx = await contract.voteFor();
+            await tx.wait();
+            getResults();
+        });
+
+        document.getElementById("voteAgainst").addEventListener("click", async () => {
+            let tx = await contract.voteAgainst();
+            await tx.wait();
+            getResults();
+        });
+
+        getTopic();
+        getResults();
+    </script>
+
+<h1 id="topic"></h1>
+<button id="voteFor">Голосовать "За"</button>
+<button id="voteAgainst">Голосовать "Против"</button>
+<h2 id="results"></h2>
+
+</body>
+</html>
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+sol:
+
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.0;
+
+contract Guesser{
+
+    string public topic;
+    uint public votesFor;
+    uint public votesAgainst;
+
+    constructor(string memory _topic) {
+        topic = _topic;
+        votesFor = 0;
+        votesAgainst = 0;
+    }
+
+    function voteFor() public {
+        votesFor += 1;
+    }
+
+    function voteAgainst() public {
+        votesAgainst += 1;
+    }
+
+    function getResults() public view returns (uint, uint) {
+        return (votesFor, votesAgainst);
+    }
+
+}
